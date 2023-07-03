@@ -9,12 +9,16 @@ import { GridItemContext } from "./GridItemContext";
 
 interface GridItemProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
+  onItemDragStart?: () => void;
+  onItemDragEnd?: () => void;
 }
 
 export function GridItem({
   children,
   style,
   className,
+  onItemDragStart = () => {},
+  onItemDragEnd = () => {},
   ...other
 }: GridItemProps) {
   const context = React.useContext(GridItemContext);
@@ -91,6 +95,7 @@ export function GridItem({
     const y = startCoords.current[1] + state.delta[1];
     dragging.current = false;
     onEnd(state, x, y);
+    onItemDragEnd();
   }
 
   const { bind } = useGestureResponder(
@@ -101,6 +106,7 @@ export function GridItem({
         }
 
         onStart();
+        onItemDragStart();
 
         startCoords.current = [left, top];
         dragging.current = true;
@@ -148,6 +154,12 @@ export function GridItem({
         ? ` ${className}`
         : "",
     ...bind,
+    onclick: (e: React.MouseEvent) => {
+      if (disableDrag) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    },
     style: {
       cursor: !!disableDrag ? "grab" : undefined,
       zIndex: styles.zIndex,
